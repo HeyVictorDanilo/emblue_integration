@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+from typing import List, Tuple, Any
 
 class EmblueConnection(pysftp.Connection):
     def __init__(self, *args, **kwargs):
@@ -21,11 +22,11 @@ class Emblue:
         self.db_instance = main_db.DBInstance(public_key=os.getenv("CLIENT_KEY"))
         self.today = date.today().strftime("%Y%m%d")
 
-    def get_emblue_accounts(self):
+    def get_emblue_accounts(self) -> List[Tuple[Any]]:
         accounts = self.db_instance.handler(query="SELECT * FROM em_blue;")
         return accounts
 
-    def download_file(self):
+    def download_file(self) -> None:
         for account in self.get_emblue_accounts():
             with EmblueConnection(
                 account[2], username=account[4], password=account[3]
@@ -33,7 +34,7 @@ class Emblue:
                 with sftp.cd("upload/Report"):
                     sftp.get(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
 
-    def unzip_local_file(self):
+    def unzip_local_file(self) -> None:
         try:
             with zipfile.ZipFile(
                 f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
@@ -43,11 +44,11 @@ class Emblue:
             raise error
 
     @staticmethod
-    def read_local_file():
+    def read_local_file() -> str:
         files = [f for f in os.listdir(".") if os.path.isfile(f)]
         for f in files:
             if re.search("\.csv$", f):
-                print("The file ending with .csv is:", f)
+                return f
 
 
 if __name__ == "__main__":
