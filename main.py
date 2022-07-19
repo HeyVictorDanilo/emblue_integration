@@ -24,26 +24,30 @@ class Emblue:
 
     def download_file(self):
         for account in self.get_emblue_accounts():
-            with EmblueConnection(account[2], username=account[4], password=account[3]) as sftp:
-                with sftp.cd('upload/Report'):
+            with EmblueConnection(
+                account[2], username=account[4], password=account[3]
+            ) as sftp:
+                with sftp.cd("upload/Report"):
                     sftp.get(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
 
     def unzip_local_file(self):
         try:
-            with zipfile.ZipFile(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r") as archive:
+            with zipfile.ZipFile(
+                f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
+            ) as archive:
                 archive.extractall()
         except zipfile.BadZipFile as error:
             raise error
 
     @staticmethod
     def read_local_file():
-        files = [f for f in os.listdir('.') if os.path.isfile(f)]
+        files = [f for f in os.listdir(".") if os.path.isfile(f)]
         for f in files:
             if re.search("\.csv$", f):
                 print("The file ending with .csv is:", f)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     emblue = Emblue()
     emblue.download_file()
     emblue.unzip_local_file()

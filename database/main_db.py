@@ -42,7 +42,7 @@ class DBInstance:
                         "db_name": "hey_elcolombiano",
                         "db_user": "maiq",
                         "db_host": "test-events-migration.csry9lg2mjjk.us-east-1.rds.amazonaws.com",
-                        "db_password": "DevInstanceHey$"
+                        "db_password": "DevInstanceHey$",
                     }
         return conn_data
 
