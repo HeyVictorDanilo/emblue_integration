@@ -5,6 +5,9 @@ import zipfile
 import re
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 class EmblueConnection(pysftp.Connection):
     def __init__(self, *args, **kwargs):
@@ -15,7 +18,7 @@ class EmblueConnection(pysftp.Connection):
 
 class Emblue:
     def __init__(self):
-        self.db_instance = main_db.DBInstance(public_key="kKS0DfTKpE8TqUZs")
+        self.db_instance = main_db.DBInstance(public_key=os.getenv("CLIENT_KEY"))
         self.today = date.today().strftime("%Y%m%d")
 
     def get_emblue_accounts(self):

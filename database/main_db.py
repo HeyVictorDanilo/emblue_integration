@@ -1,6 +1,10 @@
 from cryptography.fernet import Fernet
 import psycopg2
 import logging
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class DBInstance:
@@ -14,7 +18,7 @@ class DBInstance:
         return result
 
     def decrypt_fernet(self, token):
-        key = "1eseMybb_3ukR1nsPEJ7_DQwHLsU8uYfezu5E_MUS2E="
+        key = os.getenv("FERNET_KEY")
         return Fernet(key).decrypt(token.encode()).decode()
 
     def get_tenants(self):
@@ -22,10 +26,10 @@ class DBInstance:
         t.db_host, t.db_password, t.db_port, t.db_host_for_reading FROM tenant as t;"""
 
         tanants_conn_data = {
-            "db_name": "hey_sdk",
-            "db_user": "maiq",
-            "db_host": "test-events-migration.csry9lg2mjjk.us-east-1.rds.amazonaws.com",
-            "db_password": "DevInstanceHey$",
+            "db_name": os.getenv("TENANT_DB"),
+            "db_user": os.getenv("TENANT_USER"),
+            "db_host": os.getenv("TENANT_HOST"),
+            "db_password": os.getenv("TENANT_PASSWORD"),
         }
 
         conn = self.make_conn(data=tanants_conn_data)
@@ -39,10 +43,10 @@ class DBInstance:
             if tenant[0]:
                 if self.public_key == self.decrypt_fernet(tenant[0]):
                     conn_data = {
-                        "db_name": "hey_elcolombiano",
-                        "db_user": "maiq",
-                        "db_host": "test-events-migration.csry9lg2mjjk.us-east-1.rds.amazonaws.com",
-                        "db_password": "DevInstanceHey$",
+                        "db_name": os.getenv("CLIENT_DB"),
+                        "db_user": os.getenv("TENANT_USER"),
+                        "db_host": os.getenv("TENANT_HOST"),
+                        "db_password": os.getenv("TENANT_PASSWORD"),
                     }
         return conn_data
 
