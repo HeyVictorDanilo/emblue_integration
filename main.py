@@ -2,9 +2,8 @@ from database import main_db
 import pysftp
 from datetime import date
 import zipfile
-import time
-import csv
-import pandas as pd
+import re
+import os
 
 
 class EmblueConnection(pysftp.Connection):
@@ -36,18 +35,16 @@ class Emblue:
         except zipfile.BadZipFile as error:
             raise error
 
-    def read_local_file(self):
-        with open(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.csv", 'r') as csvfile:
-            csvreader = csv.reader(csvfile)
-            for row in csvreader:
-                print(row)
+    @staticmethod
+    def read_local_file():
+        files = [f for f in os.listdir('.') if os.path.isfile(f)]
+        for f in files:
+            if re.search("\.csv$", f):
+                print("The file ending with .csv is:", f)
 
 
 if __name__ == '__main__':
-    start = time.time()
     emblue = Emblue()
     emblue.download_file()
     emblue.unzip_local_file()
     emblue.read_local_file()
-    end = time.time()
-    print(end - start)
