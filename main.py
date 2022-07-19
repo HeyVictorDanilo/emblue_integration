@@ -1,14 +1,16 @@
 from database import main_db
-import pysftp
-from datetime import date
-import zipfile
-import re
-import os
 
+from datetime import date
+from typing import List, Tuple, Any
 from dotenv import load_dotenv
 load_dotenv()
 
-from typing import List, Tuple, Any
+import pysftp
+import zipfile
+import re
+import os
+import pandas as pd
+
 
 class EmblueConnection(pysftp.Connection):
     def __init__(self, *args, **kwargs):
@@ -29,7 +31,7 @@ class Emblue:
     def download_file(self) -> None:
         for account in self.get_emblue_accounts():
             with EmblueConnection(
-                account[2], username=account[4], password=account[3]
+                    account[2], username=account[4], password=account[3]
             ) as sftp:
                 with sftp.cd("upload/Report"):
                     sftp.get(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
@@ -37,22 +39,38 @@ class Emblue:
     def unzip_local_file(self) -> None:
         try:
             with zipfile.ZipFile(
-                f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
+                    f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
             ) as archive:
                 archive.extractall()
         except zipfile.BadZipFile as error:
             raise error
 
     @staticmethod
-    def read_local_file() -> str:
+    def find_local_file() -> str:
         files = [f for f in os.listdir(".") if os.path.isfile(f)]
         for f in files:
             if re.search("\.csv$", f):
                 return f
 
+    def process_file(self, file_name: str):
+
+        """
+        with open(file_name, 'r', encoding='utf-16') as file:
+            for line in file.readlines():
+                print(line)
+        """
+
+        """
+        df = pd.read_csv(file_name, encoding="UTF-16", on_bad_lines='skip')
+        print(df)
+        """
+
+    def execute(self):
+        self.download_file()
+        self.unzip_local_file()
+        self.process_file(file_name=self.find_local_file())
+
 
 if __name__ == "__main__":
     emblue = Emblue()
-    emblue.download_file()
-    emblue.unzip_local_file()
-    emblue.read_local_file()
+    emblue.execute()
