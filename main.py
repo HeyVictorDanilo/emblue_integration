@@ -144,7 +144,7 @@ class Emblue:
     @staticmethod
     def build_insert_query(table: str, columns: List[str], values: List[Any]) -> str:
         return f"""
-            INSERT INTO {table}({columns})
+            INSERT INTO {table}({", ".join([str(c) for c in columns])})
             VALUES {values};
         """
 
