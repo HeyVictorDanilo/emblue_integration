@@ -11,6 +11,8 @@ import re
 import os
 import pandas as pd
 
+from itertools import islice
+
 
 class EmblueConnection(pysftp.Connection):
     def __init__(self, *args, **kwargs):
@@ -53,16 +55,101 @@ class Emblue:
                 return f
 
     def process_file(self, file_name: str):
-
-        """
         with open(file_name, 'r', encoding='utf-16') as file:
-            for line in file.readlines():
-                print(line)
-        """
+            while True:
+                lines = list(islice(file, 1000))
+                self.process_lines(lines=lines)
+                if not lines:
+                    break
 
         """
         df = pd.read_csv(file_name, encoding="UTF-16", on_bad_lines='skip')
         print(df)
+        """
+
+    def process_lines(self, lines: List[str]):
+        sent_values_list = []
+        click_values_list = []
+        open_values_list = []
+        unsuscribe_values_list = []
+
+        for line in lines:
+            line_words = line.split(";")
+
+            if line_words[6] == "Enviado":
+                sent_values_list.append(
+                    (
+                        line_words[1],
+                        line_words[2],
+                        line_words[3],
+                        line_words[4],
+                        line_words[7]
+                    )
+                )
+
+            if line_words[6] == "Click":
+                click_values_list.append(
+                    (
+                        line_words[1],
+                        line_words[2],
+                        line_words[3],
+                        line_words[4],
+                        line_words[7]
+                    )
+                )
+
+            if line_words[6] == "Abierto":
+                open_values_list.append(
+                    (
+                        line_words[1],
+                        line_words[2],
+                        line_words[3],
+                        line_words[4],
+                        line_words[7]
+                    )
+                )
+
+            if line_words[6] == "Desuscripto":
+                unsuscribe_values_list.append(
+                    (
+                        line_words[1],
+                        line_words[2],
+                        line_words[3],
+                        line_words[4],
+                        line_words[7]
+                    )
+                )
+
+            if line_words[6] == "Rebote":
+                pass
+
+        build_insert_sent_query = self.build_insert_query(
+            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+            values=sent_values_list
+        )
+
+        build_insert_click_query = self.build_insert_query(
+            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+            values=click_values_list
+        )
+
+        build_insert_open_query = self.build_insert_query(
+            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+            values=open_values_list
+        )
+
+        build_insert_unsuscribe_query = self.build_insert_query(
+            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+            values=unsuscribe_values_list
+        )
+
+
+
+    @staticmethod
+    def build_insert_query(columns: List[str], values: List[Any]) -> str:
+        return f"""
+            INSERT INTO em_blue_receive_email_event({columns})
+            VALUES {values};
         """
 
     def execute(self):
