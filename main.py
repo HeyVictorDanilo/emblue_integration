@@ -1,17 +1,16 @@
 from database import main_db
 
-from datetime import date
-from typing import List, Tuple, Any
-from dotenv import load_dotenv
-load_dotenv()
-
 import pysftp
 import zipfile
 import re
 import os
-import pandas as pd
 
+from datetime import date
+from typing import List, Tuple, Any
 from itertools import islice
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class EmblueConnection(pysftp.Connection):
@@ -71,7 +70,7 @@ class Emblue:
         sent_values_list = []
         click_values_list = []
         open_values_list = []
-        unsuscribe_values_list = []
+        unsubscribe_values_list = []
 
         for line in lines:
             line_words = line.split(";")
@@ -110,7 +109,7 @@ class Emblue:
                 )
 
             if line_words[6] == "Desuscripto":
-                unsuscribe_values_list.append(
+                unsubscribe_values_list.append(
                     (
                         line_words[1],
                         line_words[2],
@@ -138,12 +137,10 @@ class Emblue:
             values=open_values_list
         )
 
-        build_insert_unsuscribe_query = self.build_insert_query(
+        build_insert_unsubscribe_query = self.build_insert_query(
             columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-            values=unsuscribe_values_list
+            values=unsubscribe_values_list
         )
-
-
 
     @staticmethod
     def build_insert_query(columns: List[str], values: List[Any]) -> str:
