@@ -61,11 +61,6 @@ class Emblue:
                 if not lines:
                     break
 
-        """
-        df = pd.read_csv(file_name, encoding="UTF-16", on_bad_lines='skip')
-        print(df)
-        """
-
     def process_lines(self, lines: List[str]):
         sent_values_list = []
         click_values_list = []
