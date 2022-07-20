@@ -118,29 +118,33 @@ class Emblue:
                 pass
 
         build_insert_sent_query = self.build_insert_query(
+            table="em_blue_receive_email_event",
             columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
             values=sent_values_list
         )
 
         build_insert_click_query = self.build_insert_query(
-            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+            table="em_blue_link_click_event",
+            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "url"],
             values=click_values_list
         )
 
         build_insert_open_query = self.build_insert_query(
+            table="em_blue_open_email_event",
             columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
             values=open_values_list
         )
 
         build_insert_unsubscribe_query = self.build_insert_query(
+            table="em_blue_unsubscribe_event",
             columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
             values=unsubscribe_values_list
         )
 
     @staticmethod
-    def build_insert_query(columns: List[str], values: List[Any]) -> str:
+    def build_insert_query(table: str, columns: List[str], values: List[Any]) -> str:
         return f"""
-            INSERT INTO em_blue_receive_email_event({columns})
+            INSERT INTO {table}({columns})
             VALUES {values};
         """
 
