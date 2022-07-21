@@ -22,9 +22,12 @@ class EmblueConnection(pysftp.Connection):
 
 
 class Emblue:
-    def __init__(self):
+    def __init__(self, searching_date: str = ""):
         self.db_instance = main_db.DBInstance(public_key=os.getenv("CLIENT_KEY"))
-        self.today = date.today().strftime("%Y%m%d")
+        if searching_date:
+            self.today = searching_date
+        else:
+            self.today = date.today().strftime("%Y%m%d")
 
     def get_emblue_accounts(self) -> List[Tuple[Any]]:
         accounts = self.db_instance.handler(query="SELECT * FROM em_blue;")
@@ -212,6 +215,7 @@ class Emblue:
         self.process_file(file_name=self.find_local_file())
         end = time.time()
         print(end - start)
+
 
 if __name__ == "__main__":
     emblue = Emblue()
