@@ -21,6 +21,36 @@ class EmblueConnection(pysftp.Connection):
         super().__init__(*args, **kwargs)
 
 
+class ManageSFTPFile:
+    def __init__(self, accounts, file_name):
+        self.accounts = accounts
+        self.file_name = file_name
+
+    def download_file(self) -> None:
+        for account in self.accounts:
+            with EmblueConnection(
+                account[2], username=account[4], password=account[3]
+            ) as sftp:
+                with sftp.cd("upload/Report"):
+                    sftp.get(f"{self.file_name}.zip")
+
+
+class ManageZip:
+    def __init__(self, file_name):
+        self.file_name = file_name
+
+    def unzip_local_file(self) -> None:
+        try:
+            with zipfile.ZipFile(
+                f"{self.file_name}.zip", mode="r"
+            ) as archive:
+                archive.extractall()
+        except zipfile.BadZipFile as error:
+            raise error
+        finally:
+            os.remove(f"{self.file_name}.zip")
+
+
 class Emblue:
     def __init__(self, searching_date: str = ""):
         self.db_instance = main_db.DBInstance(public_key=os.getenv("CLIENT_KEY"))
@@ -32,25 +62,6 @@ class Emblue:
     def get_emblue_accounts(self) -> List[Tuple[Any]]:
         accounts = self.db_instance.handler(query="SELECT * FROM em_blue;")
         return accounts
-
-    def download_file(self) -> None:
-        for account in self.get_emblue_accounts():
-            with EmblueConnection(
-                account[2], username=account[4], password=account[3]
-            ) as sftp:
-                with sftp.cd("upload/Report"):
-                    sftp.get(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
-
-    def unzip_local_file(self) -> None:
-        try:
-            with zipfile.ZipFile(
-                f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
-            ) as archive:
-                archive.extractall()
-        except zipfile.BadZipFile as error:
-            raise error
-        finally:
-            os.remove(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
 
     @staticmethod
     def find_local_file() -> str:
@@ -210,9 +221,19 @@ class Emblue:
 
     def execute(self):
         start = time.time()
-        self.download_file()
-        self.unzip_local_file()
+
+        ManageSFTPFile(
+            accounts=self.get_emblue_accounts(),
+            file_name=f"ACTIVIDADDETALLEDIARIOFTP_{self.today}"
+        ).download_file()
+
+        ManageZip(
+            file_name=f"ACTIVIDADDETALLEDIARIOFTP_{self.today}"
+        ).unzip_local_file()
+
+        """
         self.process_file(file_name=self.find_local_file())
+        """
         end = time.time()
         print(end - start)
 
