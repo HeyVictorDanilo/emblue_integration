@@ -26,7 +26,7 @@ class ManageSFTPFile:
         self.accounts = accounts
         self.file_name = file_name
 
-    def download_file(self) -> None:
+    def download_file(self, accounts) -> None:
         for account in self.accounts:
             with EmblueConnection(
                 account[2], username=account[4], password=account[3]
@@ -231,9 +231,7 @@ class Emblue:
             file_name=f"ACTIVIDADDETALLEDIARIOFTP_{self.today}"
         ).unzip_local_file()
 
-        """
         self.process_file(file_name=self.find_local_file())
-        """
         end = time.time()
         print(end - start)
 
