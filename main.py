@@ -61,6 +61,8 @@ class Emblue:
                 if not lines:
                     break
 
+        #delete file
+
     def process_lines(self, lines: List[str]):
         sent_values_list = []
         click_values_list = []
@@ -117,29 +119,34 @@ class Emblue:
             if line_words[6] == "Rebote":
                 pass
 
-        build_insert_sent_query = self.build_insert_query(
-            table="em_blue_receive_email_event",
-            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-            values=sent_values_list
-        )
 
-        build_insert_click_query = self.build_insert_query(
-            table="em_blue_link_click_event",
-            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "url"],
-            values=click_values_list
-        )
+        if sent_values_list:
+            build_insert_sent_query = self.build_insert_query(
+                table="em_blue_receive_email_event",
+                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+                values=sent_values_list
+            )
 
-        build_insert_open_query = self.build_insert_query(
-            table="em_blue_open_email_event",
-            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-            values=open_values_list
-        )
+        if click_values_list:
+            build_insert_click_query = self.build_insert_query(
+                table="em_blue_link_click_event",
+                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "url"],
+                values=click_values_list
+            )
 
-        build_insert_unsubscribe_query = self.build_insert_query(
-            table="em_blue_unsubscribe_event",
-            columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-            values=unsubscribe_values_list
-        )
+        if open_values_list:
+            build_insert_open_query = self.build_insert_query(
+                table="em_blue_open_email_event",
+                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+                values=open_values_list
+            )
+
+        if unsubscribe_values_list:
+            build_insert_unsubscribe_query = self.build_insert_query(
+                table="em_blue_unsubscribe_event",
+                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
+                values=unsubscribe_values_list
+            )
 
     @staticmethod
     def build_insert_query(table: str, columns: List[str], values: List[Any]) -> str:
