@@ -32,7 +32,7 @@ class Emblue:
     def download_file(self) -> None:
         for account in self.get_emblue_accounts():
             with EmblueConnection(
-                    account[2], username=account[4], password=account[3]
+                account[2], username=account[4], password=account[3]
             ) as sftp:
                 with sftp.cd("upload/Report"):
                     sftp.get(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
@@ -40,11 +40,13 @@ class Emblue:
     def unzip_local_file(self) -> None:
         try:
             with zipfile.ZipFile(
-                    f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
+                f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip", mode="r"
             ) as archive:
                 archive.extractall()
         except zipfile.BadZipFile as error:
             raise error
+        finally:
+            os.remove(f"ACTIVIDADDETALLEDIARIOFTP_{self.today}.zip")
 
     @staticmethod
     def find_local_file() -> str:
@@ -54,14 +56,14 @@ class Emblue:
                 return f
 
     def process_file(self, file_name: str):
-        with open(file_name, 'r', encoding='utf-16') as file:
+        with open(file_name, "r", encoding="utf-16") as file:
             while True:
                 lines = list(islice(file, 1000))
                 self.process_lines(lines=lines)
                 if not lines:
                     break
 
-        #delete file
+        os.remove(file_name)
 
     def process_lines(self, lines: List[str]):
         sent_values_list = []
@@ -119,34 +121,61 @@ class Emblue:
             if line_words[6] == "Rebote":
                 pass
 
-
         if sent_values_list:
             build_insert_sent_query = self.build_insert_query(
                 table="em_blue_receive_email_event",
-                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-                values=sent_values_list
+                columns=[
+                    "sent_date",
+                    "activity_date",
+                    "campaign",
+                    "subject_campaign",
+                    "description",
+                ],
+                values=sent_values_list,
             )
+            print(build_insert_sent_query)
 
         if click_values_list:
             build_insert_click_query = self.build_insert_query(
                 table="em_blue_link_click_event",
-                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "url"],
-                values=click_values_list
+                columns=[
+                    "sent_date",
+                    "activity_date",
+                    "campaign",
+                    "subject_campaign",
+                    "url",
+                ],
+                values=click_values_list,
             )
+            print(build_insert_click_query)
 
         if open_values_list:
             build_insert_open_query = self.build_insert_query(
                 table="em_blue_open_email_event",
-                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-                values=open_values_list
+                columns=[
+                    "sent_date",
+                    "activity_date",
+                    "campaign",
+                    "subject_campaign",
+                    "description",
+                ],
+                values=open_values_list,
             )
+            print(build_insert_open_query)
 
         if unsubscribe_values_list:
             build_insert_unsubscribe_query = self.build_insert_query(
                 table="em_blue_unsubscribe_event",
-                columns=["sent_date", "activity_date", "campaign", "subject_campaign", "description"],
-                values=unsubscribe_values_list
+                columns=[
+                    "sent_date",
+                    "activity_date",
+                    "campaign",
+                    "subject_campaign",
+                    "description",
+                ],
+                values=unsubscribe_values_list,
             )
+            print(build_insert_unsubscribe_query)
 
     @staticmethod
     def build_insert_query(table: str, columns: List[str], values: List[Any]) -> str:
