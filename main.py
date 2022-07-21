@@ -4,6 +4,7 @@ import pysftp
 import zipfile
 import re
 import os
+import time
 
 from datetime import date
 from typing import List, Tuple, Any
@@ -135,7 +136,7 @@ class Emblue:
 
         if sent_values_list:
             build_insert_sent_query = self.build_insert_query(
-                table="em_blue_receive_email_event",
+                table="em_blue_sent_email_event",
                 columns=[
                     "email",
                     "sent_date",
@@ -205,10 +206,12 @@ class Emblue:
         """.replace("[", "").replace("]", "")
 
     def execute(self):
+        start = time.time()
         self.download_file()
         self.unzip_local_file()
         self.process_file(file_name=self.find_local_file())
-
+        end = time.time()
+        print(end - start)
 
 if __name__ == "__main__":
     emblue = Emblue()
