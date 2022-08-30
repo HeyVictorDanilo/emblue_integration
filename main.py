@@ -1,84 +1,42 @@
-from database import main_db
-
-import pysftp
-import zipfile
-import re
+import logging
 import os
 import time
+from io import BytesIO
+from typing import List, Any
 
-from datetime import date
-from typing import List, Tuple, Any
-from itertools import islice
+import boto3
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
+from smart_open import smart_open
+
+from database import main_db
 
 load_dotenv()
-
-
-class EmblueConnection(pysftp.Connection):
-    def __init__(self, *args, **kwargs):
-        self._sftp_live = False
-        self._transport = None
-        super().__init__(*args, **kwargs)
-
-
-class ManageSFTPFile:
-    def __init__(self, accounts, file_name):
-        self.accounts = accounts
-        self.file_name = file_name
-
-    def download_file(self, accounts) -> None:
-        for account in self.accounts:
-            with EmblueConnection(
-                account[2], username=account[4], password=account[3]
-            ) as sftp:
-                with sftp.cd("upload/Report"):
-                    sftp.get(f"{self.file_name}.zip")
-
-
-class ManageZip:
-    def __init__(self, file_name):
-        self.file_name = file_name
-
-    def unzip_local_file(self) -> None:
-        try:
-            with zipfile.ZipFile(
-                f"{self.file_name}.zip", mode="r"
-            ) as archive:
-                archive.extractall()
-        except zipfile.BadZipFile as error:
-            raise error
-        finally:
-            os.remove(f"{self.file_name}.zip")
 
 
 class Emblue:
     def __init__(self, searching_date: str = ""):
         self.db_instance = main_db.DBInstance(public_key=os.getenv("CLIENT_KEY"))
-        if searching_date:
-            self.today = searching_date
+        self.client = boto3.client(
+            service_name="s3",
+            region_name=os.getenv("REGION"),
+            aws_access_key_id=os.getenv("ACCESS_KEY"),
+            aws_secret_access_key=os.getenv("SECRET_KEY"),
+        )
+
+    def get_file_contents(self):
+        try:
+            response = self.client.list_objects(Bucket=os.getenv("BUCKET_CSV_FILES"))
+        except ClientError as e:
+            logging.error(e)
         else:
-            self.today = date.today().strftime("%Y%m%d")
+            return response.get("Contents")
 
-    def get_emblue_accounts(self) -> List[Tuple[Any]]:
-        accounts = self.db_instance.handler(query="SELECT * FROM em_blue;")
-        return accounts
-
-    @staticmethod
-    def find_local_file() -> str:
-        files = [f for f in os.listdir(".") if os.path.isfile(f)]
-        for f in files:
-            if re.search("\.csv$", f):
-                return f
-
-    def process_file(self, file_name: str):
-        with open(file_name, "r", encoding="utf-16") as file:
-            while True:
-                lines = list(islice(file, 1000))
-                self.process_lines(lines=lines)
-                if not lines:
-                    break
-
-        os.remove(file_name)
+    def process_files(self):
+        for content in self.get_file_contents():
+            with smart_open(f's3://{os.getenv("BUCKET_CSV_FILES")}/{content.get("Key")}', 'rb', encoding="utf-16") as file:
+                for line in file:
+                    print(line)
 
     def process_lines(self, lines: List[str]):
         sent_values_list = []
@@ -221,17 +179,7 @@ class Emblue:
 
     def execute(self):
         start = time.time()
-
-        ManageSFTPFile(
-            accounts=self.get_emblue_accounts(),
-            file_name=f"ACTIVIDADDETALLEDIARIOFTP_{self.today}"
-        ).download_file()
-
-        ManageZip(
-            file_name=f"ACTIVIDADDETALLEDIARIOFTP_{self.today}"
-        ).unzip_local_file()
-
-        self.process_file(file_name=self.find_local_file())
+        self.process_files()
         end = time.time()
         print(end - start)
 
